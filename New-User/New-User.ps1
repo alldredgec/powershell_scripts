@@ -60,20 +60,22 @@ $variables = @{
     SamAccountName       = $un
     GivenName            = $first
     Surname              = $last
-    OtherAttributes      = @{userprincipalname = "$un@blah.com"; mail = "$un@blah.com"; proxyaddresses = "SMTP:$un@blah.com"}
     Passwordneverexpires = $True
+    OtherAttributes      = @{userprincipalname = "$un@blah.com"; mail = "$un@blah.com"; proxyaddresses =
+        ("SMTP:$un@blah.com"),
+        ("smtp:$flast@blah.com"),
+        ("smtp:$un@blahold.com"),
+        ("SIP:$un@blah.com")}
 }
     
 New-ADUser $Name @variables
 
-## Adds additional proxyaddresses such as the SIP Address for Skype and alias' for email
-Set-ADUser -Identity $un -Server $dc -ChangePasswordAtLogon $false -Add @{proxyaddresses = "smtp:$flast@blah.com"}
-Set-ADUser -Identity $un -Server $dc -Add @{proxyaddresses = "smtp:$un@blah.mail.onmicrosoft.com"}
-Set-ADUser -Identity $un -Server $dc -Add @{proxyaddresses = "smtp:$un@blahold.com"}
-Set-ADUser -Identity $un -Server $dc -Add @{proxyaddresses = "SIP:$un@blah.com"}
-
-## Adds newly created user to same AD groups as a similar user
-Get-ADUser -Filter {Name -eq $similaruser} -Server $dc -Properties memberof | Select-Object -ExpandProperty memberof | Where-Object {$_ -notlike "*EMS*"} | Add-ADGroupMember -Members $un -Server $dc -PassThru | Select-Object -Property SamAccountName
+## Adds newly created user to same AD groups as a similar user. Outputs groups that are being copied.
+Get-ADUser -Filter {Name -eq $similaruser} -Server $dc -Properties memberof | 
+Select-Object -ExpandProperty memberof | 
+Where-Object {$_ -notlike "*EMS*"} | 
+Add-ADGroupMember -Members $un -Server $dc -PassThru | 
+Select-Object -Property SamAccountName
 
 ## Adds Azure EMS E3 Licensing via AD Group
 Add-ADGroupMember -Identity "Azure_EMS_E3_Licensing" -Members $un -Server $dc
@@ -105,8 +107,8 @@ Import-PSSession $EXOSession -AllowClobber
 
 ## Wait until the new user is synchronized to O365
 do {
-	  	Write-Host "." -nonewline -ForegroundColor Red
-	  	Start-Sleep 5      
+    Write-Host "." -nonewline -ForegroundColor Red
+    Start-Sleep 5      
 } until (Get-Mailbox $un)
 
 ## This section copies the cloud distribution lists from the similar user to the new user
