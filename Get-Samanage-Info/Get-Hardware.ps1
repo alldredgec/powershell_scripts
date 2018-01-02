@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Connects to Samanage API and outputs hardware information
+  Connects to Samanage API and outputs hardware information for reporting
 .DESCRIPTION
   In order to get an accurate view of hardware stored in Samanage, this script will loop through each page via the JSON
   API call and output information regarding the models stored in Samanage.
